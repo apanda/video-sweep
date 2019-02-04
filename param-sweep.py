@@ -16,13 +16,19 @@ opt_heading = ['x264-params']
 # parameter name and an iterable over the values we would like.
 params_to_try = {\
         # Max keyframe
+        # maximum interval between IDR-frames
         'keyint': range(125, 550, 250),
+        # Min length between IDR frames. Recommended is default or 1x framerate?
         'min-keyint': range(2, 50, 10),
+        # 2 is optimal. slower. ? should we also try 0, which is disabled ?
         'b-adapt': [2],
         'bframes': range(0, 10, 5),
         'deframe': range(-3,3, 2),
+        # Target quality. Impossible to predict bitrate
         'crf': range(18, 26, 3),
+        # Adds an offset to quantizer of chroma planes?
         'chroma-qp-offset': range(-10, 2, 3),
+        # Adaptive quantization mode. Only 0,1,2 are valid ?
         'aq-mode': range(0, 4, 2),
         'partitions': ['none', 'all'],
         'direct': ['spatial', 'temporal', 'auto'],
@@ -34,7 +40,7 @@ params_to_try = {\
 
 # This represents (in order) the set of parameters for which we want to prioritize exploration. Later parameters
 # have higher priority.
-prioritize = []
+prioritize = ['crf']
 # This represents (in order) the set of fields for which we want to depriroitize exploration. Earlier parameters have
 # lower priority
 deprioritize = ['subme', 'partitions', 'min-keyint']
@@ -51,7 +57,10 @@ def gen_opts():
 
 def run_ffmpeg_opts(name, opts, i, duration, output):
     # FIXME: Generalize this bit
-    opts = default_opts_pfx + ['-i', i, '-ss', '00:00:00', '-to', duration] + default_opts_proc  + opts + [output] # output must always be the last arg
+    if duration:
+        opts = default_opts_pfx + ['-i', i, '-ss', '00:00:00', '-to', duration] + default_opts_proc  + opts + [output] # output must always be the last arg
+    else:
+        opts = default_opts_pfx + ['-i', i] + default_opts_proc  + opts + [output] # output must always be the last arg
     p = subprocess.run(opts, capture_output=True, check=True)
     return (p.stderr, p.stdout)
 
